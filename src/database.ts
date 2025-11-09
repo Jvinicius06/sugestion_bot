@@ -1,7 +1,18 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 
-const db = new Database(path.join(__dirname, '../suggestions.db'));
+// Criar diretório data/ se não existir
+const dataDir = path.join(__dirname, '../data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// Caminho do banco de dados
+const dbPath = path.join(dataDir, 'suggestions.db');
+const db = new Database(dbPath);
+
+console.log(`📂 Banco de dados: ${dbPath}`);
 
 // Criar tabelas se não existirem
 db.exec(`

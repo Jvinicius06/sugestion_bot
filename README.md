@@ -173,6 +173,9 @@ sujestion_bot/
 │   ├── config.ts                 # Configurações do bot
 │   ├── database.ts               # Setup do SQLite
 │   └── index.ts                  # Arquivo principal
+├── data/
+│   ├── .gitkeep                  # Mantém a pasta no git
+│   └── suggestions.db            # Banco de dados (criado automaticamente)
 ├── .env                          # Variáveis de ambiente (não commitado)
 ├── .env.example                  # Exemplo de configuração
 ├── Dockerfile                    # Configuração Docker
@@ -211,7 +214,38 @@ O bot usa SQLite para armazenar:
 - **suggestions**: Informações sobre cada sugestão (autor, conteúdo, IDs)
 - **votes**: Votos dos usuários (tipo de voto, timestamp)
 
-O arquivo `suggestions.db` é criado automaticamente na primeira execução.
+### Localização do Banco de Dados
+
+O arquivo do banco de dados é criado automaticamente em:
+- **Caminho**: `data/suggestions.db`
+- **Criação**: Automática na primeira execução
+- **Persistência**: A pasta `data/` é montada como volume no Docker
+
+### Backup do Banco de Dados
+
+**Localmente:**
+```bash
+cp data/suggestions.db data/suggestions_backup_$(date +%Y%m%d).db
+```
+
+**Com Docker:**
+```bash
+# O arquivo está em ./data/suggestions.db no host
+cp data/suggestions.db data/suggestions_backup_$(date +%Y%m%d).db
+```
+
+### Restaurar Backup
+
+```bash
+# Parar o bot
+docker-compose down
+
+# Restaurar o arquivo
+cp data/suggestions_backup_YYYYMMDD.db data/suggestions.db
+
+# Iniciar novamente
+docker-compose up -d
+```
 
 ## Scripts Disponíveis
 
@@ -259,8 +293,8 @@ ls -la .env
 docker-compose down
 docker-compose up -d
 
-# O arquivo suggestions.db deve estar no diretório raiz
-ls -la suggestions.db
+# O arquivo suggestions.db deve estar na pasta data/
+ls -la data/suggestions.db
 ```
 
 **Recriar do zero:**

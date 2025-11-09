@@ -16,7 +16,6 @@ services:
     # Volume para persistir o banco de dados
     volumes:
       - ./data:/app/data
-      - ./suggestions.db:/app/suggestions.db
 
     # Logging
     logging:

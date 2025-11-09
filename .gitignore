@@ -2,5 +2,11 @@ node_modules/
 dist/
 .env
 *.db
+*.db-journal
 *.log
 .DS_Store
+data/
+
+# Pasta de dados (mas permite .gitkeep)
+data/*
+!data/.gitkeep
