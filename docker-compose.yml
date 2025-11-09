@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  suggestion-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: suggestion-bot:latest
+    container_name: suggestion-bot
+    restart: unless-stopped
+
+    # Variáveis de ambiente do arquivo .env
+    env_file:
+      - .env
+
+    # Volume para persistir o banco de dados
+    volumes:
+      - ./data:/app/data
+      - ./suggestions.db:/app/suggestions.db
+
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Recursos (opcional - ajuste conforme necessário)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
