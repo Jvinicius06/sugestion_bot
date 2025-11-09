@@ -2,6 +2,7 @@ import { Client, GatewayIntentBits, Events } from 'discord.js';
 import { config, validateConfig } from './config';
 import { handleMessage } from './events/messageCreate';
 import { handleInteraction } from './events/interactionCreate';
+import { handleMessageDelete } from './events/messageDelete';
 import { startNicknameSync } from './services/syncNicknames';
 import './database'; // Inicializar banco de dados
 
@@ -33,6 +34,9 @@ client.on(Events.ClientReady, () => {
 
 // Event: Nova mensagem
 client.on(Events.MessageCreate, handleMessage);
+
+// Event: Mensagem deletada
+client.on(Events.MessageDelete, handleMessageDelete);
 
 // Event: Interação (botões)
 client.on(Events.InteractionCreate, handleInteraction);

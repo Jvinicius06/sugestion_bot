@@ -93,6 +93,11 @@ export const queries = {
   // Atualizar username/nickname do autor
   updateAuthorUsername: db.prepare(`
     UPDATE suggestions SET author_username = ? WHERE id = ?
+  `),
+
+  // Deletar sugestão (CASCADE vai remover os votos automaticamente)
+  deleteSuggestion: db.prepare(`
+    DELETE FROM suggestions WHERE id = ?
   `)
 };
 
