@@ -53,6 +53,21 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_edit_history_suggestion ON edit_history(suggestion_id);
 `);
 
+// Migração: Adicionar colunas novas em bancos antigos
+try {
+  // Verificar se a coluna audit_message_id existe
+  const tableInfo = db.prepare("PRAGMA table_info(suggestions)").all() as any[];
+  const hasAuditMessageId = tableInfo.some((col: any) => col.name === 'audit_message_id');
+
+  if (!hasAuditMessageId) {
+    console.log('🔄 Migrando banco de dados: adicionando coluna audit_message_id...');
+    db.exec('ALTER TABLE suggestions ADD COLUMN audit_message_id TEXT');
+    console.log('✅ Migração concluída!');
+  }
+} catch (error) {
+  console.error('❌ Erro durante migração do banco:', error);
+}
+
 // Preparar queries
 export const queries = {
   // Criar nova sugestão
