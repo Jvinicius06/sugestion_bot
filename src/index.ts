@@ -1,9 +1,10 @@
-import { Client, GatewayIntentBits, Events } from 'discord.js';
+import { Client, GatewayIntentBits, Events, REST, Routes } from 'discord.js';
 import { config, validateConfig } from './config';
 import { handleMessage } from './events/messageCreate';
 import { handleInteraction } from './events/interactionCreate';
 import { handleMessageDelete } from './events/messageDelete';
 import { startNicknameSync } from './services/syncNicknames';
+import * as editCommand from './commands/edit';
 import './database'; // Inicializar banco de dados
 
 // Validar configurações
@@ -22,10 +23,35 @@ const client = new Client({
   ]
 });
 
+// Função para registrar comandos slash
+async function deployCommands(clientId: string): Promise<void> {
+  const commands = [editCommand.data.toJSON()];
+  const rest = new REST().setToken(config.token);
+
+  try {
+    console.log('🔄 Registrando comandos slash...');
+
+    await rest.put(
+      Routes.applicationGuildCommands(clientId, config.guildId),
+      { body: commands }
+    );
+
+    console.log(`✅ ${commands.length} comando(s) registrado(s)!`);
+  } catch (error) {
+    console.error('❌ Erro ao registrar comandos:', error);
+  }
+}
+
 // Event: Bot pronto
-client.on(Events.ClientReady, () => {
+client.on(Events.ClientReady, async () => {
   console.log(`✅ Bot conectado como ${client.user?.tag}`);
   console.log(`📝 Canal de sugestões: ${config.suggestionsChannelId}`);
+
+  // Registrar comandos automaticamente
+  if (client.user) {
+    await deployCommands(client.user.id);
+  }
+
   console.log('🚀 Bot está pronto para receber sugestões!');
 
   // Iniciar sincronização automática de nicknames (a cada 5 minutos)
@@ -38,8 +64,33 @@ client.on(Events.MessageCreate, handleMessage);
 // Event: Mensagem deletada
 client.on(Events.MessageDelete, handleMessageDelete);
 
-// Event: Interação (botões)
-client.on(Events.InteractionCreate, handleInteraction);
+// Event: Interações (slash commands, modals, botões)
+client.on(Events.InteractionCreate, async (interaction) => {
+  try {
+    // Slash commands
+    if (interaction.isChatInputCommand()) {
+      if (interaction.commandName === 'edit') {
+        await editCommand.execute(interaction);
+      }
+      return;
+    }
+
+    // Modals
+    if (interaction.isModalSubmit()) {
+      if (interaction.customId.startsWith('edit_suggestion_')) {
+        await editCommand.handleModalSubmit(interaction);
+      }
+      return;
+    }
+
+    // Botões de votação
+    if (interaction.isButton()) {
+      await handleInteraction(interaction);
+    }
+  } catch (error) {
+    console.error('❌ Erro ao processar interação:', error);
+  }
+});
 
 // Event: Erro
 client.on(Events.Error, (error) => {

@@ -75,6 +75,10 @@ export async function handleMessage(message: Message): Promise<void> {
     // Mensagem inicial na thread
     await thread.send(`💬 Use esta thread para discutir sobre esta sugestão!\n\n**Autor:** ${member || author}\n**Sugestão:** ${content}`);
 
+    // Criar mensagem de auditoria (histórico de edições)
+    const auditMessage = await thread.send(`📝 **Histórico de Edições**\n\n*Nenhuma edição realizada ainda.*`);
+    queries.updateAuditMessageId.run(auditMessage.id, suggestionId);
+
     // Deletar mensagem original
     await message.delete().catch(console.error);
 

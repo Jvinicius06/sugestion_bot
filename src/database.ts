@@ -20,6 +20,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     message_id TEXT UNIQUE NOT NULL,
     thread_id TEXT,
+    audit_message_id TEXT,
     author_id TEXT NOT NULL,
     author_username TEXT NOT NULL,
     content TEXT NOT NULL,
@@ -36,8 +37,20 @@ db.exec(`
     UNIQUE(suggestion_id, user_id)
   );
 
+  CREATE TABLE IF NOT EXISTS edit_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    suggestion_id INTEGER NOT NULL,
+    old_content TEXT NOT NULL,
+    new_content TEXT NOT NULL,
+    edited_by_id TEXT NOT NULL,
+    edited_by_username TEXT NOT NULL,
+    edited_at INTEGER NOT NULL,
+    FOREIGN KEY (suggestion_id) REFERENCES suggestions(id) ON DELETE CASCADE
+  );
+
   CREATE INDEX IF NOT EXISTS idx_votes_suggestion ON votes(suggestion_id);
   CREATE INDEX IF NOT EXISTS idx_votes_user ON votes(user_id);
+  CREATE INDEX IF NOT EXISTS idx_edit_history_suggestion ON edit_history(suggestion_id);
 `);
 
 // Preparar queries
@@ -98,6 +111,32 @@ export const queries = {
   // Deletar sugestão (CASCADE vai remover os votos automaticamente)
   deleteSuggestion: db.prepare(`
     DELETE FROM suggestions WHERE id = ?
+  `),
+
+  // Buscar sugestão por thread_id
+  getSuggestionByThreadId: db.prepare(`
+    SELECT * FROM suggestions WHERE thread_id = ?
+  `),
+
+  // Atualizar audit_message_id
+  updateAuditMessageId: db.prepare(`
+    UPDATE suggestions SET audit_message_id = ? WHERE id = ?
+  `),
+
+  // Salvar histórico de edição
+  saveEditHistory: db.prepare(`
+    INSERT INTO edit_history (suggestion_id, old_content, new_content, edited_by_id, edited_by_username, edited_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `),
+
+  // Buscar histórico de edições de uma sugestão
+  getEditHistory: db.prepare(`
+    SELECT * FROM edit_history WHERE suggestion_id = ? ORDER BY edited_at ASC
+  `),
+
+  // Atualizar conteúdo da sugestão
+  updateSuggestionContent: db.prepare(`
+    UPDATE suggestions SET content = ? WHERE id = ?
   `)
 };
 
